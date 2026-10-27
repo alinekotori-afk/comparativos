@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prática de Comparativos em Português</title>
+    <!-- Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        
+        .chip {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Animação suave para o hover e seleção no mobile */
+        .chip-selected {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+            transform: scale(1.05);
+            background-color: #4f46e5 !important;
+            color: white !important;
+        }
+
+        .drop-zone-active {
+            border-color: #818cf8 !important;
+            background-color: #e0e7ff !important;
+        }
+
+        /* Oculta os itens nativos de arrasto fantasma para focar no visual customizado */
+        .chip.dragging {
+            opacity: 0.5;
+        }
+
+        /* Ajuste do chip quando está dentro da lacuna */
+        .drop-zone .chip {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            border: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+    <!-- Cabeçalho -->
+    <header class="bg-indigo-600 text-white shadow-md py-8 px-4 mb-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-3">Prática de Comparativos</h1>
+            <p class="text-indigo-100 text-lg md:text-xl max-w-2xl mx-auto">
+                Pratique os graus de <strong>igualdade, superioridade e inferioridade</strong>.
+            </p>
+            <p class="mt-4 text-sm bg-indigo-700/50 inline-block py-2 px-4 rounded-full">
+                💡 <strong>Dica:</strong> Arraste as palavras para as lacunas, ou toque na palavra e depois na lacuna vazia.
+            </p>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-4xl mx-auto px-4" id="app-container">
+        
+        <!-- Container das Questões (Gerado via JS) -->
+        <div id="quiz-container"></div>
+
+        <!-- Botão de Verificação -->
+        <div class="mt-10 mb-8 text-center sticky bottom-6 z-10">
+            <button id="verify-btn" onclick="checkAnswers()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 active:translate-y-0 w-full md:w-auto">
+                Verificar Respostas
+            </button>
+        </div>
+
+        <!-- Resultado Modal/Mensagem -->
+        <div id="result-message" class="hidden max-w-lg mx-auto mt-8 p-6 bg-white rounded-2xl shadow-xl text-center border-2 border-indigo-100 mb-10">
+            <h2 class="text-2xl font-bold mb-2 text-slate-800" id="result-title"></h2>
+            <p class="text-lg text-slate-600 mb-6" id="result-text"></p>
+            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                Tentar Novamente
+            </button>
+        </div>
+
+    </main>
+
+    <script>
+        // Dados das Questões baseados no seu pedido
+        const quizData = [
+            {
+                context: 'Eu não sou fã de frio.',
+                text1: 'Para mim, o inverno é ',
+                ans1: 'menos',
+                text2: ' agradável ',
+                ans2: 'do que',
+                text3: ' a primavera.',
+                chips: ['menos', 'do que', 'mais', 'tão']
+            },
+            {
+                context: 'Fui ao novo restaurante e adorei.',
+                text1: 'A comida de lá é muito ',
+                ans1: 'melhor',
+                text2: ' ',
+                ans2: 'que',
+                text3: ' a do restaurante antigo.',
+                chips: ['melhor', 'mais boa', 'que', 'quanto']
+            },
+            {
+                context: 'Nós duas estudamos bastante para a prova.',
+                text1: 'Eu estou ',
+                ans1: 'tão',
+                text2: ' preparada ',
+                ans2: 'quanto',
+                text3: ' você.',
+                chips: ['tão', 'muito', 'quanto', 'do que']
+            },
+            {
+                context: 'Você viu o preço das passagens aéreas?',
+                text1: 'Viajar de avião está ',
+                ans1: 'mais',
+                text2: ' caro ',
+                ans2: 'do que',
+                text3: ' viajar de ônibus.',
+                chips: ['mais', 'tão', 'do que', 'como']
+            },
+            {
+                context: 'Esse celular tem a bateria fraca.',
+                text1: 'Ele dura ',
+                ans1: 'menos',
+                text2: ' tempo ligado ',
+                ans2: 'que',
+                text3: ' o meu antigo.',
+                chips: ['menos', 'pior', 'que', 'quanto']
+            },
+            {
+                context: 'A festa de ontem estava lotada!',
+                text1: 'Tinha ',
+                ans1: 'tanta',
+                text2: ' gente ',
+                ans2: 'quanto',
+                text3: ' no show passado.',
+                chips: ['tanta', 'tão', 'quanto', 'que']
+            },
+            {
+                context: 'A família cresceu e eles se mudaram.',
+                text1: 'A casa nova é ',
+                ans1: 'maior',
+                text2: ' ',
+                ans2: 'do que',
+                text3: ' o apartamento antigo.',
+                chips: ['maior', 'mais grande', 'do que', 'como']
+            },
+            {
+                context: 'Que café gostoso!',
+                text1: 'Com certeza, ele está ',
+                ans1: 'mais',
+                text2: ' gostoso ',
+                ans2: 'do que',
+                text3: ' o leite puro.',
+                chips: ['mais', 'melhor', 'do que', 'quanto']
+            },
+            {
+                context: 'Eu detesto filmes de terror.',
+                text1: 'Assistir a um terror é ',
+                ans1: 'menos',
+                text2: ' divertido ',
+                ans2: 'do que',
+                text3: ' uma comédia.',
+                chips: ['menos', 'pior', 'do que', 'tanto']
+            },
+            {
+                context: 'O trânsito está completamente parado hoje.',
+                text1: 'Ir de carro vai demorar ',
+                ans1: 'tanto',
+                text2: ' ',
+                ans2: 'quanto',
+                text3: ' ir caminhando.',
+                chips: ['tanto', 'tão', 'quanto', 'que']
+            }
+        ];
+
+        let selectedChipId = null;
+        let isVerified = false;
+
+        // Inicialização: Renderizar Questões dinamicamente
+        function init() {
+            const container = document.getElementById('quiz-container');
+            
+            quizData.forEach((q, index) => {
+                // Embaralha as opções para evitar que a resposta certa esteja na mesma posição
+                const shuffledChips = [...q.chips].sort(() => Math.random() - 0.5);
+                const questionNum = index + 1;
+
+                const html = `
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-8 mb-6 transition-all hover:shadow-md" id="question-card-${index}">
+                    
+                    <div class="flex items-start mb-4">
+                        <span class="flex-shrink-0 bg-indigo-100 text-indigo-700 font-bold w-8 h-8 rounded-full flex items-center justify-center mr-3 mt-0.5">${questionNum}</span>
+                        <p class="text-slate-500 italic text-base md:text-lg">
+                            <span class="font-semibold text-slate-600 not-italic">Contexto:</span> "${q.context}"
+                        </p>
+                    </div>
+
+                    <div class="text-lg md:text-xl font-medium text-slate-800 leading-loose mb-6 md:ml-11 flex flex-wrap items-center">
+                        <span>${q.text1}</span>
+                        <div class="drop-zone inline-flex items-center justify-center min-w-[100px] h-11 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 transition-colors mx-2 cursor-pointer" 
+                             data-question="${index}" data-blank="1" data-answer="${q.ans1}"
+                             ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" onclick="handleZoneClick(this)">
+                        </div>
+                        <span>${q.text2}</span>
+                        <div class="drop-zone inline-flex items-center justify-center min-w-[100px] h-11 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 transition-colors mx-2 cursor-pointer" 
+                             data-question="${index}" data-blank="2" data-answer="${q.ans2}"
+                             ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" onclick="handleZoneClick(this)">
+                        </div>
+                        <span>${q.text3}</span>
+                    </div>
+
+                    <div class="md:ml-11">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Opções (Arraste ou Toque):</p>
+                        <div class="options-pool flex flex-wrap gap-3 min-h-[50px] p-3 bg-slate-50 border border-slate-200 rounded-xl" 
+                             id="pool-${index}" data-question="${index}"
+                             ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" onclick="handlePoolClick(this, event)">
+                            ${shuffledChips.map((chip, chipIdx) => `
+                                <div class="chip cursor-pointer bg-white text-indigo-700 font-semibold py-2 px-5 rounded-full shadow-sm border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-95" 
+                                     id="chip-${index}-${chipIdx}" draggable="true" data-question="${index}" data-value="${chip}" 
+                                     ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="handleChipClick(this, event)">
+                                    ${chip}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        /* ================= EVENTOS DE DRAG AND DROP (MOUSE) ================= */
+        
+        function dragStart(ev) {
+            if(isVerified) return;
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('opacity-50');
+            clearSelection(); // Limpa seleção de clique se houver
+        }
+
+        function dragEnd(ev) {
+            ev.target.classList.remove('opacity-50');
+        }
+
+        function allowDrop(ev) {
+            if(isVerified) return;
+            ev.preventDefault();
+            // Adiciona classe visual apenas se for uma drop-zone (não pool)
+            if(ev.currentTarget.classList.contains('drop-zone')) {
+                ev.currentTarget.classList.add('drop-zone-active');
+            }
+        }
+
+        function dragLeave(ev) {
+            if(ev.currentTarget.classList.contains('drop-zone')) {
+                ev.currentTarget.classList.remove('drop-zone-active');
+            }
+        }
+
+        function drop(ev) {
+            if(isVerified) return;
+            ev.preventDefault();
+            if(ev.currentTarget.classList.contains('drop-zone')) {
+                ev.currentTarget.classList.remove('drop-zone-active');
+            }
+            
+            const chipId = ev.dataTransfer.getData("text");
+            const chip = document.getElementById(chipId);
+            handlePlacement(chip, ev.currentTarget);
+        }
+
+        /* ================= EVENTOS DE TOQUE/CLIQUE (MOBILE FALLBACK) ================= */
+        
+        function handleChipClick(chip, event) {
+            if(isVerified) return;
+            event.stopPropagation(); // Evita ativar o click do pool que está por trás
+
+            // Se o chip já está em uma lacuna, ele volta para o pool original
+            if (chip.parentElement.classList.contains('drop-zone')) {
+                const pool = document.getElementById(`pool-${chip.dataset.question}`);
+                handlePlacement(chip, pool);
+                clearSelection();
+                return;
+            }
+
+            // Selecionar/Desselecionar chip no pool
+            if (selectedChipId === chip.id) {
+                clearSelection();
+            } else {
+                clearSelection();
+                selectedChipId = chip.id;
+                chip.classList.add('chip-selected');
+            }
+        }
+
+        function handleZoneClick(zone) {
+            if(isVerified) return;
+            
+            if (selectedChipId) {
+                // Coloca o chip selecionado na lacuna
+                const chip = document.getElementById(selectedChipId);
+                handlePlacement(chip, zone);
+            } else if (zone.children.length > 0) {
+                // Tocou em uma zona cheia sem chip selecionado -> devolve o chip pro pool
+                const chip = zone.children[0];
+                const pool = document.getElementById(`pool-${chip.dataset.question}`);
+                handlePlacement(chip, pool);
+            }
+        }
+
+        function handlePoolClick(pool, event) {
+            if(isVerified) return;
+            // Se tocar na área vazia do pool com um chip selecionado, devolve ele.
+            if (selectedChipId) {
+                const chip = document.getElementById(selectedChipId);
+                if (pool.id === `pool-${chip.dataset.question}`) {
+                    handlePlacement(chip, pool);
+                }
+            }
+        }
+
+        /* ================= LÓGICA CENTRAL DE POSICIONAMENTO ================= */
+        
+        function handlePlacement(chip, targetZone) {
+            if (!chip || !targetZone) return;
+            
+            const questionIndex = chip.dataset.question;
+
+            // Se o alvo for uma Lacuna (Drop Zone)
+            if (targetZone.classList.contains('drop-zone')) {
+                // Impede colocar chip na questão errada
+                if (targetZone.dataset.question !== questionIndex) {
+                    showTemporaryAlert(targetZone.parentElement, "Use as palavras desta questão!");
+                    return;
+                }
+                
+                // Se a lacuna já tem um chip, manda o antigo de volta pro pool
+                if (targetZone.children.length > 0) {
+                    const existingChip = targetZone.children[0];
+                    document.getElementById(`pool-${questionIndex}`).appendChild(existingChip);
+                }
+                
+                targetZone.appendChild(chip);
+            } 
+            // Se o alvo for a Área de Opções (Pool)
+            else if (targetZone.classList.contains('options-pool')) {
+                if (targetZone.id === `pool-${questionIndex}`) {
+                    targetZone.appendChild(chip);
+                }
+            }
+            
+            clearSelection();
+        }
+
+        function clearSelection() {
+            if (selectedChipId) {
+                const oldChip = document.getElementById(selectedChipId);
+                if (oldChip) oldChip.classList.remove('chip-selected');
+                selectedChipId = null;
+            }
+        }
+
+        function showTemporaryAlert(element, message) {
+            // Um pequeno feedback visual se o usuário tentar misturar chips de questões diferentes
+            const alert = document.createElement('span');
+            alert.className = "text-xs text-rose-500 font-bold ml-2 absolute mt-12 bg-rose-50 px-2 py-1 rounded shadow-sm";
+            alert.innerText = message;
+            element.appendChild(alert);
+            setTimeout(() => alert.remove(), 2000);
+        }
+
+        /* ================= VALIDAÇÃO DAS RESPOSTAS ================= */
+        
+        function checkAnswers() {
+            if(isVerified) return;
+            clearSelection();
+            
+            let correctCount = 0;
+            const totalBlanks = 20; // 10 questões x 2 lacunas cada
+            
+            const dropZones = document.querySelectorAll('.drop-zone');
+            let unanswered = 0;
+
+            dropZones.forEach(zone => {
+                if (zone.children.length === 0) {
+                    unanswered++;
+                }
+            });
+
+            // Obriga o usuário a responder tudo antes de verificar
+            if (unanswered > 0) {
+                const btn = document.getElementById('verify-btn');
+                const originalText = btn.innerText;
+                btn.innerText = `Faltam ${unanswered} palavras. Preencha todas!`;
+                btn.classList.replace('bg-emerald-500', 'bg-amber-500');
+                btn.classList.replace('hover:bg-emerald-600', 'hover:bg-amber-600');
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-amber-500', 'bg-emerald-500');
+                    btn.classList.replace('hover:bg-amber-600', 'hover:bg-emerald-600');
+                }, 3000);
+                return;
+            }
+
+            // Desabilita interações
+            isVerified = true;
+            document.getElementById('verify-btn').classList.add('hidden');
+
+            dropZones.forEach(zone => {
+                const correctAnswer = zone.dataset.answer;
+                zone.classList.remove('border-dashed', 'border-slate-300', 'bg-slate-50', 'cursor-pointer');
+                
+                if (zone.children.length > 0) {
+                    const chip = zone.children[0];
+                    const userAnswer = chip.dataset.value;
+                    
+                    // Remove classes de hover/drag do chip
+                    chip.classList.remove('hover:bg-indigo-50', 'hover:border-indigo-300', 'cursor-pointer', 'shadow-sm');
+                    chip.removeAttribute('draggable');
+                    
+                    if (userAnswer === correctAnswer) {
+                        correctCount++;
+                        // Estilo Correto (Verde)
+                        zone.classList.add('border-emerald-500', 'bg-emerald-100');
+                        chip.classList.add('bg-emerald-100', 'text-emerald-800');
+                        chip.classList.remove('bg-white', 'text-indigo-700', 'border-indigo-200');
+                    } else {
+                        // Estilo Incorreto (Vermelho)
+                        zone.classList.add('border-rose-500', 'bg-rose-100');
+                        chip.classList.add('bg-rose-100', 'text-rose-800');
+                        chip.classList.remove('bg-white', 'text-indigo-700', 'border-indigo-200');
+                    }
+                }
+            });
+
+            // Desativa os chips que sobraram no pool
+            document.querySelectorAll('.options-pool .chip').forEach(chip => {
+                chip.classList.add('opacity-50', 'cursor-not-allowed');
+                chip.removeAttribute('draggable');
+            });
+
+            showResult(correctCount, totalBlanks);
+        }
+
+        function showResult(correct, total) {
+            const resultDiv = document.getElementById('result-message');
+            const title = document.getElementById('result-title');
+            const text = document.getElementById('result-text');
+            
+            resultDiv.classList.remove('hidden');
+            
+            const percentage = Math.round((correct / total) * 100);
+            
+            if (percentage === 100) {
+                title.innerText = "🎉 Perfeito! Excelente Trabalho!";
+                title.className = "text-2xl font-bold mb-2 text-emerald-600";
+                text.innerText = `Você acertou ${correct} de ${total} lacunas (100%). Seu domínio dos comparativos está espetacular.`;
+            } else if (percentage >= 70) {
+                title.innerText = "👏 Muito bom!";
+                title.className = "text-2xl font-bold mb-2 text-indigo-600";
+                text.innerText = `Você acertou ${correct} de ${total} lacunas (${percentage}%). Faltou pouco para a perfeição!`;
+            } else {
+                title.innerText = "📚 Continue praticando!";
+                title.className = "text-2xl font-bold mb-2 text-rose-500";
+                text.innerText = `Você acertou ${correct} de ${total} lacunas (${percentage}%). Revise as regras de comparativos e tente novamente.`;
+            }
+
+            // Scroll suave para o resultado final
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Inicia a aplicação quando a janela carrega
+        window.onload = init;
+
+    </script>
+</body>
+</html>
